@@ -15,8 +15,7 @@ def logistic_loss(X, y, w):
     :param w:    weights, np.array (d, )
     :return E:   calculated loss, python float
     """
-    raise NotImplementedError("You have to implement this function.")
-    E = None
+    E = (np.sum(np.log(1 + np.exp(-y * (X.T @ w.T))))) / X.shape[1]
     return E
 
 
@@ -31,8 +30,10 @@ def logistic_loss_gradient(X, y, w):
     :param w:   weights, np.array (d, )
     :return g:  resulting gradient vector, np.array (d, )
     """
-    raise NotImplementedError("You have to implement this function.")
-    g = None
+
+    a = (-y * X) / (1 / np.exp(-y * (X.T @ w.T)) + 1)
+    g = (1 / X.shape[1]) * np.sum(a, axis=1)
+    
     return g
 
 
@@ -50,8 +51,34 @@ def logistic_loss_gradient_descent(X, y, w_init, epsilon):
     :return wt:     wt - progress of weights, np.array (d, number_of_accepted_candidates)
     :return Et:     Et - progress of logistic loss, np.array (number_of_accepted_candidates, )
     """
-    raise NotImplementedError("You have to implement this function.")
-    w, wt, Et = None, None, None
+    w = w_init
+    step_size = 1.0
+    E = logistic_loss(X, y, w)
+    g = logistic_loss_gradient(X, y, w)
+    wt = w.copy().reshape(-1, 1) 
+    Et = np.array([E])  
+    w_prev = np.zeros(w.shape[0])
+
+    while(True):
+        E_new = logistic_loss(X, y, w - step_size * g)
+        g_new = logistic_loss_gradient(X, y, w - step_size * g)
+
+        
+        if E_new < E:
+            w_prev = w.copy()
+            w -= step_size * g
+            g = g_new
+            E = E_new
+            step_size *= 2
+
+            wt = np.hstack((wt, w.reshape(-1, 1)))
+            Et = np.append(Et, E)
+        else:
+            step_size /= 2
+
+        if (np.linalg.norm(w - w_prev) <= epsilon):
+            break
+
     return w, wt, Et
 
 
@@ -65,8 +92,12 @@ def classify_images(X, w):
     :param w:    weights, np.array (d, )
     :return y:   estimated labels of the observations, np.array (n, )
     """
-    raise NotImplementedError("You have to implement this function.")
-    y = None
+    
+    l = X.T @ w.T
+    # p for 1 class
+    p = 1 / (1 + np.exp(-1 * l)) 
+    y = np.where(p <= 1 - p, -1, 1)
+
     return y
 
 
@@ -79,8 +110,8 @@ def get_threshold(w):
     :param w:    weights, np.array (2, )
     :return:     calculated threshold (scalar)
     """
-    raise NotImplementedError("You have to implement this function.")
-    thr = None
+
+    thr = -w[0] / w[1]
     return thr
 
 
